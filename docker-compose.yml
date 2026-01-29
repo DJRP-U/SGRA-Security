@@ -1,0 +1,54 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: sgra_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: sgra_db
+      MYSQL_USER: sgra_user
+      MYSQL_PASSWORD: secret_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: sgra_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+  backend:
+    build: ./SGRA
+    container_name: sgra_backend
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: sgra_db
+      DB_USER: sgra_user
+      DB_PASSWORD: secret_password
+      SECRET_KEY: ad55bf93d57d76fa06114d21682ed04c09982b6fd1cfbd6c8d6f1ca7b3c28226
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./SGRA-WEB
+    container_name: sgra_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

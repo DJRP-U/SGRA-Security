@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">backend_test_report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">backend_test_report.html</h1>
+    <p>Report generated on 20-Jan-2026 at 19:13:17 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">36 tests took 00:00:32.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" >
+            <span class="failed">11 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">25 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.12.3&#34;, &#34;Platform&#34;: &#34;Linux-6.17.9-76061709-generic-x86_64-with-glibc2.39&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.0.1&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;anyio&#34;: &#34;4.11.0&#34;, &#34;html&#34;: &#34;4.2.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}}, &#34;tests&#34;: {&#34;app/tests/test_auth_integration.py::test_login_success&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_auth_integration.py::test_login_success&#34;, &#34;duration&#34;: &#34;637 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_auth_integration.py::test_login_success&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;637 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /cuenta/login\n[TEST] Payload: {&amp;#x27;correo&amp;#x27;: &amp;#x27;test@example.com&amp;#x27;, &amp;#x27;contrasena&amp;#x27;: &amp;#x27;Test1234&amp;#x27;}\n&#34;}], &#34;app/tests/test_auth_integration.py::test_login_failure&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_auth_integration.py::test_login_failure&#34;, &#34;duration&#34;: &#34;638 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_auth_integration.py::test_login_failure&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;638 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /cuenta/login\n[TEST] Payload: {&amp;#x27;correo&amp;#x27;: &amp;#x27;test@example.com&amp;#x27;, &amp;#x27;contrasena&amp;#x27;: &amp;#x27;WrongPassword&amp;#x27;}\n&#34;}], &#34;app/tests/test_auth_integration.py::test_get_me_protected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_auth_integration.py::test_get_me_protected&#34;, &#34;duration&#34;: &#34;230 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_auth_integration.py::test_get_me_protected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;230 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] GET /cuenta/me\n&#34;}], &#34;app/tests/test_auth_integration.py::test_list_usuarios_admin_required&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_auth_integration.py::test_list_usuarios_admin_required&#34;, &#34;duration&#34;: &#34;227 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_auth_integration.py::test_list_usuarios_admin_required&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;227 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] GET /cuenta/usuarios\n&#34;}], &#34;app/tests/test_auth_integration.py::test_registration_flow&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_auth_integration.py::test_registration_flow&#34;, &#34;duration&#34;: &#34;228 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_auth_integration.py::test_registration_flow&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;228 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /solicitud/crear-solicitud\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;New&amp;#x27;, &amp;#x27;apellido&amp;#x27;: &amp;#x27;User&amp;#x27;, &amp;#x27;correo&amp;#x27;: &amp;#x27;new@example.com&amp;#x27;, &amp;#x27;contrasena&amp;#x27;: &amp;#x27;SecurePass1&amp;#x27;}\n\n[TEST] POST /cuenta/login\n[TEST] Payload: {&amp;#x27;correo&amp;#x27;: &amp;#x27;new@example.com&amp;#x27;, &amp;#x27;contrasena&amp;#x27;: &amp;#x27;SecurePass1&amp;#x27;}\n&#34;}], &#34;app/tests/test_defecto_integration.py::test_crud_defecto&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_defecto_integration.py::test_crud_defecto&#34;, &#34;duration&#34;: &#34;303 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_defecto_integration.py::test_crud_defecto&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;303 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72718412f1a0&amp;gt;\nauth_header = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY4OTYxNTY3fQ.n6PQOiTDoO1ro8GP79jLxS2DOmwoQCn5GuEu8WH2UOU&amp;#x27;}\ntest_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72718412f800&amp;gt;, db = &amp;lt;sqlalchemy.orm.session.Session object at 0x72718412f5c0&amp;gt;\n\n    def test_crud_defecto(client, auth_header, test_user, db):\n        # Setup Project, Member, Requisito, HU\n        proj = Proyecto(\n            codigo=&amp;quot;DEF-001&amp;quot;,\n            nombre=&amp;quot;Proyecto Defecto&amp;quot;,\n            descripcion=&amp;quot;Desc&amp;quot;,\n            fecha_inicio=date.today(),\n            fecha_fin=date.today() + timedelta(days=30),\n            tipo=TipoProyecto.WEB,\n            estado=EstadoProyecto.ACTIVO,\n            estado_actual=EstadoActualProyecto.PLANIFICACION\n        )\n        db.add(proj)\n        db.commit()\n        db.refresh(proj)\n    \n        # Setup Permissions and Role\n        perm_crear = Permiso(nombre=&amp;quot;defecto:crear&amp;quot;, descripcion=&amp;quot;Crear defecto&amp;quot;)\n        perm_asignar = Permiso(nombre=&amp;quot;defecto:asignar_responsable&amp;quot;, descripcion=&amp;quot;Asignar&amp;quot;)\n        perm_eliminar = Permiso(nombre=&amp;quot;defecto:eliminar&amp;quot;, descripcion=&amp;quot;Eliminar&amp;quot;)\n        db.add_all([perm_crear, perm_asignar, perm_eliminar])\n        db.commit()\n    \n        rol = RolProyecto(nombre=&amp;quot;QA Tester&amp;quot;, descripcion=&amp;quot;Rol de pruebas&amp;quot;, proyecto_id=proj.id)\n        db.add(rol)\n        db.commit()\n    \n        db.add(RolPermiso(rol_id=rol.id, permiso_id=perm_crear.id))\n        db.add(RolPermiso(rol_id=rol.id, permiso_id=perm_asignar.id))\n        db.add(RolPermiso(rol_id=rol.id, permiso_id=perm_eliminar.id))\n        db.commit()\n    \n        cp = CuentaProyecto(cuenta_id=test_user.id, proyecto_id=proj.id, rol_proyecto_id=rol.id)\n        db.add(cp)\n        db.commit()\n        db.refresh(cp)\n    \n        req = Requisito(\n            identificador=&amp;quot;R-DEF&amp;quot;,\n            nombre=&amp;quot;Req Defecto&amp;quot;,\n            descripcion=&amp;quot;Desc&amp;quot;,\n            tipo=TipoRequisitoEnum.FUNCIONAL,\n            prioridad=PrioridadRequisitoEnum.ALTA,\n            estado=EstadoRequisitoEnum.APROBADO,\n            riesgo=Riesgo_Requisito_Enum.BAJO,\n            metodo_verificacion=Metodo_verificacion_requisito_Enum.PRUEBA,\n            categoria=Categoria_requisito_Enum.SEGURIDAD,\n            proyecto_id=proj.id\n        )\n        db.add(req)\n        db.commit()\n    \n        hu = HistoriaUsuario(\n            titulo=&amp;quot;HU para Defecto&amp;quot;,\n            identificador=&amp;quot;HU-DEF&amp;quot;,\n            descripcion=&amp;quot;Desc&amp;quot;,\n            prioridad=&amp;quot;ALTA&amp;quot;,\n            estado=EstadoHU.PENDIENTE,\n            estimacion=5,\n            criterios_aceptacion=&amp;quot;Criterios&amp;quot;,\n            creado_por_id=test_user.id\n        )\n        hu.requisitos.append(req)\n        db.add(hu)\n        db.commit()\n        db.refresh(hu)\n    \n        # 1. Create Defecto\n        payload = {\n            &amp;quot;titulo&amp;quot;: &amp;quot;Defecto 1&amp;quot;,\n            &amp;quot;descripcion_detallada&amp;quot;: &amp;quot;Descripci\u00f3n del defecto detallada&amp;quot;,\n            &amp;quot;severidad&amp;quot;: &amp;quot;ALTO&amp;quot;,\n            &amp;quot;prioridad&amp;quot;: &amp;quot;ALTA&amp;quot;,\n            &amp;quot;tipo_defecto&amp;quot;: &amp;quot;FUNCIONAL&amp;quot;,\n            &amp;quot;historia_usuario_uuid&amp;quot;: str(hu.uuid),\n            &amp;quot;fecha_limite&amp;quot;: (datetime.now() + timedelta(days=5)).isoformat()\n        }\n        response = client.post(&amp;quot;/defectos/&amp;quot;, json=payload, headers=auth_header)\n        assert response.status_code == 201\n        data = response.json()[&amp;quot;data&amp;quot;]\n        defecto_uuid = data[&amp;quot;uuid&amp;quot;]\n        assert data[&amp;quot;titulo&amp;quot;] == &amp;quot;Defecto 1&amp;quot;\n        assert data[&amp;quot;estado&amp;quot;] == &amp;quot;PENDIENTE&amp;quot;\n        assert data[&amp;quot;codigo&amp;quot;] is not None\n    \n        # 2. List Defects by Project\n        response = client.get(f&amp;quot;/defectos/listar/{proj.uuid}&amp;quot;, headers=auth_header)\n        assert response.status_code == 200\n        list_data = response.json()[&amp;quot;data&amp;quot;][&amp;quot;items&amp;quot;]\n        assert len(list_data) &amp;gt;= 1\n        assert any(d[&amp;quot;uuid&amp;quot;] == defecto_uuid for d in list_data)\n    \n        # 3. List Defects by HU\n        response = client.get(f&amp;quot;/defectos/historia-usuario/{hu.uuid}&amp;quot;, headers=auth_header)\n        assert response.status_code == 200\n        list_hu_data = response.json()[&amp;quot;data&amp;quot;]\n        assert len(list_hu_data) &amp;gt;= 1\n    \n        # 4. Get Defecto Detail\n        response = client.get(f&amp;quot;/defectos/{defecto_uuid}&amp;quot;, headers=auth_header)\n&amp;gt;       assert response.status_code == 200\nE       assert 500 == 200\nE        +  where 500 = &amp;lt;Response [500 Internal Server Error]&amp;gt;.status_code\n\napp/tests/test_defecto_integration.py:114: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /defectos/\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Defecto 1&amp;#x27;, &amp;#x27;descripcion_detallada&amp;#x27;: &amp;#x27;Descripci\u00f3n del defecto detallada&amp;#x27;, &amp;#x27;severidad&amp;#x27;: &amp;#x27;ALTO&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;tipo_defecto&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;5b8ac686-26c0-4b81-a64c-a41b2e8cd39a&amp;#x27;, &amp;#x27;fecha_limite&amp;#x27;: &amp;#x27;2026-01-25T19:12:47.797925&amp;#x27;}\n\n[TEST] GET /defectos/listar/fab2fccb-70f6-470a-83f1-cd73637bf5d5\n\n[TEST] GET /defectos/historia-usuario/5b8ac686-26c0-4b81-a64c-a41b2e8cd39a\n\n[TEST] GET /defectos/851a1926-4b6b-46fb-8197-b07fc1d983ce\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujo_requisito_hu&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujo_requisito_hu&#34;, &#34;duration&#34;: &#34;325 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujo_requisito_hu&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;325 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72717fffb9e0&amp;gt;\nauth_header = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY4OTYxNTY4fQ.eD56dknPSgq7Ch_vzBX5YlG0tRRXFUmGKLSk_ZvRY14&amp;#x27;}\ndb = &amp;lt;sqlalchemy.orm.session.Session object at 0x72717fffb380&amp;gt;, test_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72717fff9e20&amp;gt;\nsetup_flow_project = (&amp;lt;app.models.proyecto.Proyecto object at 0x72717fffba40&amp;gt;, &amp;lt;app.models.cuenta_proyecto.CuentaProyecto object at 0x72717fffafc0&amp;gt;)\n\n    def test_flujo_requisito_hu(client, auth_header, db, test_user, setup_flow_project):\n        &amp;quot;&amp;quot;&amp;quot;\n        Test Flow:\n        Requisito (PENDIENTE) -&amp;gt; APROBADO -&amp;gt; (Create HU) -&amp;gt; EN_CONSTRUCCION -&amp;gt; (Complete HU) -&amp;gt; CONSTRUIDO/TERMINADO\n        &amp;quot;&amp;quot;&amp;quot;\n        proj, cp = setup_flow_project\n    \n        # 1. Create Requisito\n        req_payload = {\n            &amp;quot;proyecto_uuid&amp;quot;: str(proj.uuid),\n            &amp;quot;nombre&amp;quot;: &amp;quot;Req Flow Test&amp;quot;,\n            &amp;quot;descripcion&amp;quot;: &amp;quot;Requisito para probar flujo de estados&amp;quot;,\n            &amp;quot;tipo_requisito&amp;quot;: &amp;quot;FUNCIONAL&amp;quot;,\n            &amp;quot;prioridad&amp;quot;: &amp;quot;ALTA&amp;quot;,\n            &amp;quot;fuente&amp;quot;: &amp;quot;Cliente&amp;quot;,\n            &amp;quot;metodo_verificacion&amp;quot;: &amp;quot;PRUEBA&amp;quot;,\n            &amp;quot;categoria&amp;quot;: &amp;quot;SEGURIDAD&amp;quot;,\n            &amp;quot;horas_esfuerzo_estimado&amp;quot;: 10,\n            &amp;quot;riesgo&amp;quot;: &amp;quot;MEDIO&amp;quot;\n        }\n        # Endpoint fixed: /requisito/guardar-requisito (Controller prefix /requisito + route /guardar-requisito)\n        resp = client.post(&amp;quot;/requisito/guardar-requisito&amp;quot;, json=req_payload, headers=auth_header)\n        assert resp.status_code == 200 # Controller returns 200\n        req_uuid = resp.json()[&amp;quot;data&amp;quot;][&amp;quot;uuid&amp;quot;]\n    \n        # 2. Approve Requisito\n        approve_payload = {&amp;quot;requisito_uuid&amp;quot;: req_uuid, &amp;quot;aprobar&amp;quot;: True}\n        # Endpoint fixed: /requisito/responder-aprobacion\n        resp = client.post(&amp;quot;/requisito/responder-aprobacion&amp;quot;, json=approve_payload, headers=auth_header)\n        assert resp.status_code == 200\n        # assert resp.json()[&amp;quot;data&amp;quot;][&amp;quot;estado&amp;quot;] == &amp;quot;APROBADO&amp;quot; # Skipped as payload might be partial\n    \n        # 3. Create HU linked to Requisito\n        hu_payload = {\n            &amp;quot;titulo&amp;quot;: &amp;quot;HU Flow Test&amp;quot;,\n            &amp;quot;descripcion&amp;quot;: &amp;quot;Historia de usuario vinculada al requisito con descripcion larga para cumplir valiadacion de sesenta caracteres&amp;quot;,\n            &amp;quot;prioridad&amp;quot;: &amp;quot;ALTA&amp;quot;,\n            &amp;quot;criterios_aceptacion&amp;quot;: &amp;quot;Criterios&amp;quot;,\n            &amp;quot;estimacion&amp;quot;: 5,\n            &amp;quot;uuids_requisitos&amp;quot;: [req_uuid],\n            &amp;quot;uuid_responsable&amp;quot;: str(test_user.uuid)\n        }\n        # Endpoint is /historias_usuario/crear\n        resp = client.post(&amp;quot;/historias_usuario/crear&amp;quot;, json=hu_payload, headers=auth_header)\n&amp;gt;       assert resp.status_code == 201\nE       assert 403 == 201\nE        +  where 403 = &amp;lt;Response [403 Forbidden]&amp;gt;.status_code\n\napp/tests/test_flujos_estados.py:114: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /requisito/guardar-requisito\n[TEST] Payload: {&amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;5daa8ffb-8ae4-4cac-9702-acf13622744b&amp;#x27;, &amp;#x27;nombre&amp;#x27;: &amp;#x27;Req Flow Test&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Requisito para probar flujo de estados&amp;#x27;, &amp;#x27;tipo_requisito&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;fuente&amp;#x27;: &amp;#x27;Cliente&amp;#x27;, &amp;#x27;metodo_verificacion&amp;#x27;: &amp;#x27;PRUEBA&amp;#x27;, &amp;#x27;categoria&amp;#x27;: &amp;#x27;SEGURIDAD&amp;#x27;, &amp;#x27;horas_esfuerzo_estimado&amp;#x27;: 10, &amp;#x27;riesgo&amp;#x27;: &amp;#x27;MEDIO&amp;#x27;}\n\n[TEST] POST /requisito/responder-aprobacion\n[TEST] Payload: {&amp;#x27;requisito_uuid&amp;#x27;: &amp;#x27;cba9553b-f681-42f2-aba4-76d0da360f2d&amp;#x27;, &amp;#x27;aprobar&amp;#x27;: True}\n\n[TEST] POST /historias_usuario/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;HU Flow Test&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Historia de usuario vinculada al requisito con descripcion larga para cumplir valiadacion de sesenta caracteres&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;criterios_aceptacion&amp;#x27;: &amp;#x27;Criterios&amp;#x27;, &amp;#x27;estimacion&amp;#x27;: 5, &amp;#x27;uuids_requisitos&amp;#x27;: [&amp;#x27;cba9553b-f681-42f2-aba4-76d0da360f2d&amp;#x27;], &amp;#x27;uuid_responsable&amp;#x27;: &amp;#x27;a698e92e-76bb-4ce3-ab06-9f305749c9b0&amp;#x27;}\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujo_tarea&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujo_tarea&#34;, &#34;duration&#34;: &#34;368 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujo_tarea&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;368 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /tarea/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Tarea Flow&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Desc&amp;#x27;, &amp;#x27;criterios_entrada&amp;#x27;: &amp;#x27;In&amp;#x27;, &amp;#x27;criterios_salida&amp;#x27;: &amp;#x27;Out&amp;#x27;, &amp;#x27;fecha_limite&amp;#x27;: &amp;#x27;2026-01-21T19:12:48.546461&amp;#x27;, &amp;#x27;tipo_tarea&amp;#x27;: &amp;#x27;Desarrollo&amp;#x27;, &amp;#x27;estimacion_horas&amp;#x27;: 2, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;3eabc2c3-6d35-4122-9fe2-d4aad3f60669&amp;#x27;}\n\n[TEST] PUT /tarea/modificar/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;, &amp;#x27;cuenta_proyecto_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;}\n\n[TEST] PATCH /tarea/iniciar-progreso/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;}\n\n[TEST] PATCH /tarea/enviar-revision/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;}\n\n[TEST] PATCH /tarea/revisar/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;, &amp;#x27;aprobado&amp;#x27;: False, &amp;#x27;comentario&amp;#x27;: &amp;#x27;Falta codigo&amp;#x27;}\n\n[TEST] PATCH /tarea/iniciar-progreso/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;}\n\n[TEST] PATCH /tarea/enviar-revision/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;}\n\n[TEST] PATCH /tarea/revisar/b85819f7-c5e1-46eb-a9e8-710ba91b1dab\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;80cb9118-445c-4166-98b5-358c9d6cdae8&amp;#x27;, &amp;#x27;aprobado&amp;#x27;: True, &amp;#x27;comentario&amp;#x27;: &amp;#x27;Falta codigo&amp;#x27;}\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujo_defecto&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujo_defecto&#34;, &#34;duration&#34;: &#34;353 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujo_defecto&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;353 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72717fe7dd30&amp;gt;\nauth_header = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY4OTYxNTY4fQ.eD56dknPSgq7Ch_vzBX5YlG0tRRXFUmGKLSk_ZvRY14&amp;#x27;}\ndb = &amp;lt;sqlalchemy.orm.session.Session object at 0x72717fe7ca40&amp;gt;, test_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72717fe7e4e0&amp;gt;\nsetup_flow_project = (&amp;lt;app.models.proyecto.Proyecto object at 0x72717fec9370&amp;gt;, &amp;lt;app.models.cuenta_proyecto.CuentaProyecto object at 0x72717fec8c50&amp;gt;)\n\n    def test_flujo_defecto(client, auth_header, db, test_user, setup_flow_project):\n        &amp;quot;&amp;quot;&amp;quot;\n        Test Flow:\n        Defecto (PENDIENTE) -&amp;gt; Asignar (ASIGNADO) -&amp;gt; En Desarrollo -&amp;gt; En Revision -&amp;gt; Resuelto\n        &amp;quot;&amp;quot;&amp;quot;\n        proj, cp = setup_flow_project\n    \n        # HU needed for Defect\n        req = Requisito(\n            proyecto_id=proj.id,\n            nombre=&amp;quot;R3&amp;quot;,\n            descripcion=&amp;quot;Desc R3&amp;quot;,\n            identificador=&amp;quot;R3&amp;quot;,\n            estado=EstadoRequisitoEnum.APROBADO,\n            tipo=TipoRequisitoEnum.FUNCIONAL,\n            prioridad=PrioridadRequisitoEnum.MEDIA,\n            riesgo=Riesgo_Requisito_Enum.BAJO,\n            metodo_verificacion=Metodo_verificacion_requisito_Enum.ANALISIS,\n            categoria=Categoria_requisito_Enum.ADECUACION_FUNCIONAL\n        )\n        db.add(req)\n        db.commit()\n    \n        hu = HistoriaUsuario(\n            titulo=&amp;quot;HU3&amp;quot;,\n            descripcion=&amp;quot;Desc HU3 con descripcion larga para cumplir valiadacion de sesenta caracteres minimos requeridos por el esquema&amp;quot;,\n            estado=EstadoHU.EN_PROCESO,\n            creado_por_id=test_user.id,\n            identificador=&amp;quot;HU-003&amp;quot;,\n            prioridad=PrioridadHU.ALTA,\n            estimacion=3,\n            criterios_aceptacion=&amp;quot;Todo ok&amp;quot;\n        )\n        hu.requisitos.append(req)\n        db.add(hu)\n        db.commit()\n        db.refresh(hu)\n    \n        # 1. Create Defecto\n        payload = {\n            &amp;quot;titulo&amp;quot;: &amp;quot;Bug Flow&amp;quot;,\n            &amp;quot;descripcion_detallada&amp;quot;: &amp;quot;Bug detailed&amp;quot;,\n            &amp;quot;severidad&amp;quot;: &amp;quot;MEDIO&amp;quot;,\n            &amp;quot;prioridad&amp;quot;: &amp;quot;MEDIA&amp;quot;,\n            &amp;quot;tipo_defecto&amp;quot;: &amp;quot;FUNCIONAL&amp;quot;,\n            &amp;quot;historia_usuario_uuid&amp;quot;: str(hu.uuid),\n            &amp;quot;fecha_limite&amp;quot;: (datetime.now() + timedelta(days=5)).isoformat()\n        }\n        resp = client.post(&amp;quot;/defectos/&amp;quot;, json=payload, headers=auth_header)\n        assert resp.status_code == 201\n        defecto_uuid = resp.json()[&amp;quot;data&amp;quot;][&amp;quot;uuid&amp;quot;]\n        assert resp.json()[&amp;quot;data&amp;quot;][&amp;quot;estado&amp;quot;] == &amp;quot;PENDIENTE&amp;quot;\n    \n        # 2. Assign -&amp;gt; ASIGNADO\n        assign_payload = {&amp;quot;cuenta_proyecto_uuid&amp;quot;: str(cp.uuid)}\n        resp = client.patch(f&amp;quot;/defectos/{defecto_uuid}/asignar&amp;quot;, json=assign_payload, headers=auth_header)\n        assert resp.status_code == 200\n        assert resp.json()[&amp;quot;data&amp;quot;][&amp;quot;estado&amp;quot;] == &amp;quot;ASIGNADO&amp;quot;\n    \n        # 3. Update to EN_DESARROLLO\n        state_payload = {&amp;quot;estado&amp;quot;: &amp;quot;EN_DESARROLLO&amp;quot;, &amp;quot;comentario&amp;quot;: &amp;quot;Working&amp;quot;}\n        resp = client.patch(f&amp;quot;/defectos/{defecto_uuid}/estado&amp;quot;, json=state_payload, headers=auth_header)\n    \n        # KNOWN BUG: &amp;#x27;ASIGNADO&amp;#x27; state has no defined transitions in service allowed_transitions dict.\n        # Expecting 400 until fixed.\n&amp;gt;       assert resp.status_code == 400\nE       assert 200 == 400\nE        +  where 200 = &amp;lt;Response [200 OK]&amp;gt;.status_code\n\napp/tests/test_flujos_estados.py:316: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /defectos/\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Bug Flow&amp;#x27;, &amp;#x27;descripcion_detallada&amp;#x27;: &amp;#x27;Bug detailed&amp;#x27;, &amp;#x27;severidad&amp;#x27;: &amp;#x27;MEDIO&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;, &amp;#x27;tipo_defecto&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;51f3da06-dfc1-44bf-9bdb-918874291b00&amp;#x27;, &amp;#x27;fecha_limite&amp;#x27;: &amp;#x27;2026-01-25T19:12:48.934088&amp;#x27;}\n\n[TEST] PATCH /defectos/49ce8eb9-9548-4e32-95ed-5555ca12b447/asignar\n[TEST] Payload: {&amp;#x27;cuenta_proyecto_uuid&amp;#x27;: &amp;#x27;7d6069a8-09c8-45aa-a2ac-2f2934f9e381&amp;#x27;}\n\n[TEST] PATCH /defectos/49ce8eb9-9548-4e32-95ed-5555ca12b447/estado\n[TEST] Payload: {&amp;#x27;estado&amp;#x27;: &amp;#x27;EN_DESARROLLO&amp;#x27;, &amp;#x27;comentario&amp;#x27;: &amp;#x27;Working&amp;#x27;}\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_requisito&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_requisito&#34;, &#34;duration&#34;: &#34;307 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujos_alternos_requisito&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;307 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /requisito/guardar-requisito\n[TEST] Payload: {&amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;d0e62977-d84e-4b47-84e4-8d9b0003ca19&amp;#x27;, &amp;#x27;nombre&amp;#x27;: &amp;#x27;Req Reject&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Requisito rejection test&amp;#x27;, &amp;#x27;tipo_requisito&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;BAJA&amp;#x27;, &amp;#x27;fuente&amp;#x27;: &amp;#x27;Cliente&amp;#x27;, &amp;#x27;metodo_verificacion&amp;#x27;: &amp;#x27;PRUEBA&amp;#x27;, &amp;#x27;categoria&amp;#x27;: &amp;#x27;SEGURIDAD&amp;#x27;, &amp;#x27;horas_esfuerzo_estimado&amp;#x27;: 5, &amp;#x27;riesgo&amp;#x27;: &amp;#x27;BAJO&amp;#x27;}\n\n[TEST] POST /requisito/responder-aprobacion\n[TEST] Payload: {&amp;#x27;requisito_uuid&amp;#x27;: &amp;#x27;e79e898d-b55c-4e12-9da8-d814b6c9d5f4&amp;#x27;, &amp;#x27;aprobar&amp;#x27;: False, &amp;#x27;motivo_rechazo&amp;#x27;: &amp;#x27;Bad requirements&amp;#x27;}\n\n[TEST] GET /requisito/listar-requisitos/d0e62977-d84e-4b47-84e4-8d9b0003ca19\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_historia_usuario&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_historia_usuario&#34;, &#34;duration&#34;: &#34;290 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujos_alternos_historia_usuario&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;290 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /historias_usuario/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Short HU&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Short&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;criterios_aceptacion&amp;#x27;: &amp;#x27;Criterios&amp;#x27;, &amp;#x27;estimacion&amp;#x27;: 5, &amp;#x27;uuids_requisitos&amp;#x27;: [&amp;#x27;3ab1c7e8-18d0-4a1b-8c4e-1513e1b6e3ea&amp;#x27;], &amp;#x27;uuid_responsable&amp;#x27;: &amp;#x27;cfd9b591-d4cd-4ff2-8bdd-fe572efbf139&amp;#x27;}\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_defecto&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_defecto&#34;, &#34;duration&#34;: &#34;313 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujos_alternos_defecto&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;313 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72717fd0f200&amp;gt;\nauth_header = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY4OTYxNTY5fQ.-AuoVWf8mAtT9M25NlawSKKdhIWGOSS7kKgP8FJNSSs&amp;#x27;}\ndb = &amp;lt;sqlalchemy.orm.session.Session object at 0x72717fd0e3c0&amp;gt;, test_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72717fd0f7a0&amp;gt;\nsetup_flow_project = (&amp;lt;app.models.proyecto.Proyecto object at 0x72717fd0f500&amp;gt;, &amp;lt;app.models.cuenta_proyecto.CuentaProyecto object at 0x7271853cd640&amp;gt;)\n\n    def test_flujos_alternos_defecto(client, auth_header, db, test_user, setup_flow_project):\n        &amp;quot;&amp;quot;&amp;quot;\n        Negative Flow: Invalid State Transition (PENDIENTE -&amp;gt; RESUELTO)\n        &amp;quot;&amp;quot;&amp;quot;\n        proj, cp = setup_flow_project\n    \n        # Setup dependencies\n        req = Requisito(\n            proyecto_id=proj.id, nombre=&amp;quot;R_Def&amp;quot;, descripcion=&amp;quot;Desc&amp;quot;, identificador=&amp;quot;R_Def&amp;quot;,\n            estado=EstadoRequisitoEnum.APROBADO, tipo=TipoRequisitoEnum.FUNCIONAL,\n            prioridad=PrioridadRequisitoEnum.MEDIA, riesgo=Riesgo_Requisito_Enum.BAJO,\n            metodo_verificacion=Metodo_verificacion_requisito_Enum.ANALISIS,\n            categoria=Categoria_requisito_Enum.ADECUACION_FUNCIONAL\n        )\n        db.add(req)\n        db.commit()\n    \n        hu = HistoriaUsuario(\n            titulo=&amp;quot;HU_Def&amp;quot;, descripcion=&amp;quot;Desc long for validation purposes ------------------------&amp;quot;,\n            estado=EstadoHU.EN_PROCESO, creado_por_id=test_user.id, identificador=&amp;quot;HU_Def&amp;quot;,\n            prioridad=PrioridadHU.ALTA, estimacion=3, criterios_aceptacion=&amp;quot;Ok&amp;quot;\n        )\n        hu.requisitos.append(req)\n        db.add(hu)\n        db.commit()\n        db.refresh(hu)\n    \n        # 1. Create Defecto\n        payload = {\n            &amp;quot;titulo&amp;quot;: &amp;quot;Bug Alt&amp;quot;,\n            &amp;quot;descripcion_detallada&amp;quot;: &amp;quot;Bug detailed&amp;quot;,\n            &amp;quot;severidad&amp;quot;: &amp;quot;MEDIO&amp;quot;,\n            &amp;quot;prioridad&amp;quot;: &amp;quot;MEDIA&amp;quot;,\n            &amp;quot;tipo_defecto&amp;quot;: &amp;quot;FUNCIONAL&amp;quot;,\n            &amp;quot;historia_usuario_uuid&amp;quot;: str(hu.uuid),\n            &amp;quot;fecha_limite&amp;quot;: (datetime.now() + timedelta(days=5)).isoformat()\n        }\n        resp = client.post(&amp;quot;/defectos/&amp;quot;, json=payload, headers=auth_header)\n        assert resp.status_code == 201\n        defecto_uuid = resp.json()[&amp;quot;data&amp;quot;][&amp;quot;uuid&amp;quot;]\n    \n        # 2. Try PENDIENTE -&amp;gt; RESUELTO (Not Allowed directly)\n        state_payload = {&amp;quot;estado&amp;quot;: &amp;quot;RESUELTO&amp;quot;, &amp;quot;comentario&amp;quot;: &amp;quot;Fixed directly&amp;quot;}\n        resp = client.patch(f&amp;quot;/defectos/{defecto_uuid}/estado&amp;quot;, json=state_payload, headers=auth_header)\n        assert resp.status_code == 400\n&amp;gt;       assert &amp;quot;No se puede cambiar el estado&amp;quot; in resp.json()[&amp;quot;detail&amp;quot;]\nE       AssertionError: assert &amp;#x27;No se puede cambiar el estado&amp;#x27; in &amp;#x27;No se puede cambiar de PENDIENTE a RESUELTO&amp;#x27;\n\napp/tests/test_flujos_estados.py:444: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /defectos/\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Bug Alt&amp;#x27;, &amp;#x27;descripcion_detallada&amp;#x27;: &amp;#x27;Bug detailed&amp;#x27;, &amp;#x27;severidad&amp;#x27;: &amp;#x27;MEDIO&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;, &amp;#x27;tipo_defecto&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;09fab5b7-fce2-4e0e-8d1b-9ec8ee1ef475&amp;#x27;, &amp;#x27;fecha_limite&amp;#x27;: &amp;#x27;2026-01-25T19:12:49.870860&amp;#x27;}\n\n[TEST] PATCH /defectos/4dacccd7-3cfa-423d-9725-b7c10f8f2d05/estado\n[TEST] Payload: {&amp;#x27;estado&amp;#x27;: &amp;#x27;RESUELTO&amp;#x27;, &amp;#x27;comentario&amp;#x27;: &amp;#x27;Fixed directly&amp;#x27;}\n&#34;}], &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_tarea&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_flujos_estados.py::test_flujos_alternos_tarea&#34;, &#34;duration&#34;: &#34;298 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_flujos_estados.py::test_flujos_alternos_tarea&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;298 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /tarea/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Tarea Alt&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Desc&amp;#x27;, &amp;#x27;criterios_entrada&amp;#x27;: &amp;#x27;In&amp;#x27;, &amp;#x27;criterios_salida&amp;#x27;: &amp;#x27;Out&amp;#x27;, &amp;#x27;fecha_limite&amp;#x27;: &amp;#x27;2026-01-21T19:12:50.191066&amp;#x27;, &amp;#x27;tipo_tarea&amp;#x27;: &amp;#x27;Desarrollo&amp;#x27;, &amp;#x27;estimacion_horas&amp;#x27;: 2, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;a3f77173-6676-48a9-b898-0b2989310e83&amp;#x27;}\n\n[TEST] PUT /tarea/modificar/46860612-15f8-421d-92de-cbad76c0957c\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;c302207b-5d37-43f3-96c8-f1f2eef7d05c&amp;#x27;, &amp;#x27;cuenta_proyecto_uuid&amp;#x27;: &amp;#x27;00000000-0000-0000-0000-000000000000&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;}\n&#34;}], &#34;app/tests/test_historia_usuario_integration.py::test_crud_historia_usuario&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_historia_usuario_integration.py::test_crud_historia_usuario&#34;, &#34;duration&#34;: &#34;283 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_historia_usuario_integration.py::test_crud_historia_usuario&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;283 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72717fd444d0&amp;gt;\nauth_header = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY4OTYxNTcwfQ.Ro89tW8Zl6NM07NRA2tCfjKmuTM_yt10e9BgfUpF7Ck&amp;#x27;}\ntest_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72717fd44890&amp;gt;, db = &amp;lt;sqlalchemy.orm.session.Session object at 0x72717fd1ad20&amp;gt;\n\n    def test_crud_historia_usuario(client, auth_header, test_user, db):\n        # Setup Project and Requisito\n        proj = Proyecto(\n            codigo=&amp;quot;HU-001&amp;quot;,\n            nombre=&amp;quot;Proyecto HU&amp;quot;,\n            descripcion=&amp;quot;Desc&amp;quot;,\n            fecha_inicio=date.today(),\n            fecha_fin=date.today(),\n            tipo=TipoProyecto.WEB,\n            estado=EstadoProyecto.ACTIVO,\n            estado_actual=EstadoActualProyecto.PLANIFICACION\n        )\n        db.add(proj)\n        db.commit()\n        db.refresh(proj)\n    \n        # Setup RBAC: Permission and Role\n        perm = Permiso(nombre=&amp;quot;hu:eliminar&amp;quot;, descripcion=&amp;quot;Eliminar HU&amp;quot;)\n        perm_edit = Permiso(nombre=&amp;quot;hu:editar&amp;quot;, descripcion=&amp;quot;Editar HU&amp;quot;)\n        db.add(perm)\n        db.add(perm_edit)\n        db.commit()\n    \n        role = RolProyecto(nombre=&amp;quot;PO&amp;quot;, descripcion=&amp;quot;Owner&amp;quot;, proyecto_id=proj.id)\n        db.add(role)\n        db.commit()\n    \n        rp = RolPermiso(rol_id=role.id, permiso_id=perm.id)\n        rp2 = RolPermiso(rol_id=role.id, permiso_id=perm_edit.id)\n        db.add(rp)\n        db.add(rp2)\n        db.commit()\n    \n        cp = CuentaProyecto(cuenta_id=test_user.id, proyecto_id=proj.id, rol_proyecto_id=role.id)\n        db.add(cp)\n        db.commit()\n    \n        req = Requisito(\n            identificador=&amp;quot;R-001&amp;quot;,\n            nombre=&amp;quot;Req For HU&amp;quot;,\n            descripcion=&amp;quot;Desc&amp;quot;,\n            tipo=TipoRequisitoEnum.FUNCIONAL,\n            prioridad=PrioridadRequisitoEnum.ALTA,\n            estado=EstadoRequisitoEnum.APROBADO,\n            riesgo=Riesgo_Requisito_Enum.BAJO,\n            metodo_verificacion=Metodo_verificacion_requisito_Enum.PRUEBA,\n            categoria=Categoria_requisito_Enum.SEGURIDAD,\n            proyecto_id=proj.id\n        )\n        db.add(req)\n        db.commit()\n        db.refresh(req)\n    \n        # 1. Create HU\n        payload = {\n            &amp;quot;titulo&amp;quot;: &amp;quot;Historia de Usuario 1&amp;quot;,\n            &amp;quot;descripcion&amp;quot;: &amp;quot;Como usuario quiero... para... (long enough description to meet min_length=60 characters constraint requirement for validation testing purposes) ..........&amp;quot;,\n            &amp;quot;prioridad&amp;quot;: &amp;quot;ALTA&amp;quot;,\n            &amp;quot;criterios_aceptacion&amp;quot;: &amp;quot;Criterio 1&amp;quot;,\n            &amp;quot;estimacion&amp;quot;: 5,\n            &amp;quot;uuids_requisitos&amp;quot;: [str(req.uuid)],\n            &amp;quot;uuid_responsable&amp;quot;: str(test_user.uuid)  # Creator logic\n        }\n        # Endpoint might differ. Usually /historias-usuario/crear or similar.\n        # need to check controller. Assuming /historias-usuario/\n        # If controller has `crear_historia_usuario`\n    \n        response = client.post(&amp;quot;/historias_usuario/crear&amp;quot;, json=payload, headers=auth_header)\n&amp;gt;       assert response.status_code == 201\nE       assert 403 == 201\nE        +  where 403 = &amp;lt;Response [403 Forbidden]&amp;gt;.status_code\n\napp/tests/test_historia_usuario_integration.py:80: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /historias_usuario/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Historia de Usuario 1&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Como usuario quiero... para... (long enough description to meet min_length=60 characters constraint requirement for validation testing purposes) ..........&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;criterios_aceptacion&amp;#x27;: &amp;#x27;Criterio 1&amp;#x27;, &amp;#x27;estimacion&amp;#x27;: 5, &amp;#x27;uuids_requisitos&amp;#x27;: [&amp;#x27;2d67f566-d3ad-4815-bd98-0c0f7283a501&amp;#x27;], &amp;#x27;uuid_responsable&amp;#x27;: &amp;#x27;5f95b538-ca1d-4216-9711-c5545e07ae60&amp;#x27;}\n&#34;}], &#34;app/tests/test_permisos_audit.py::test_audit_permissions_enforcement&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_permisos_audit.py::test_audit_permissions_enforcement&#34;, &#34;duration&#34;: &#34;332 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_permisos_audit.py::test_audit_permissions_enforcement&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;332 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72717fd187d0&amp;gt;\ndb = &amp;lt;sqlalchemy.orm.session.Session object at 0x72717fd18e30&amp;gt;, test_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72717fd1a960&amp;gt;\n\n    def test_audit_permissions_enforcement(client, db, test_user):\n        # 1. Setup Permissions\n        perms = {}\n        for code in PERMISSIONS_TO_TEST.keys():\n            p = db.query(Permiso).filter_by(nombre=code).first()\n            if not p:\n                p = Permiso(nombre=code, descripcion=f&amp;quot;Test {code}&amp;quot;)\n                (db.add(p))\n            perms[code] = p\n        db.commit()\n    \n        # 2. Setup Project\n        proj = Proyecto(\n            nombre=&amp;quot;Audit Project&amp;quot;,\n            descripcion=&amp;quot;Testing permissions&amp;quot;,\n            codigo=&amp;quot;AUDIT-1&amp;quot;,\n            estado=EstadoProyecto.ACTIVO,\n            estado_actual=EstadoActualProyecto.PLANIFICACION,\n            tipo=TipoProyecto.WEB\n        )\n        db.add(proj)\n        db.commit()\n        db.refresh(proj)\n    \n        # 3. Setup Roles\n        role_admin = RolProyecto(nombre=&amp;quot;Rol Admin&amp;quot;, descripcion=&amp;quot;Has all permissions&amp;quot;, proyecto_id=proj.id)\n        role_none = RolProyecto(nombre=&amp;quot;Rol None&amp;quot;, descripcion=&amp;quot;Has no permissions&amp;quot;, proyecto_id=proj.id)\n        db.add_all([role_admin, role_none])\n        db.commit()\n    \n        # Assign all permissions to Admin Role\n        for p in perms.values():\n            db.add(RolPermiso(rol_id=role_admin.id, permiso_id=p.id))\n        db.commit()\n    \n    \n    \n        # 4. Assign User to Project (initially with Admin role to create entities)\n        cp = CuentaProyecto(cuenta_id=test_user.id, proyecto_id=proj.id, rol_proyecto_id=role_admin.id)\n        db.add(cp)\n        db.commit()\n    \n        test_token = create_access_token(subject=str(test_user.id))\n        headers = {&amp;quot;Authorization&amp;quot;: f&amp;quot;Bearer {test_token}&amp;quot;}\n    \n        # 5. Create specific entities for replacement in URLs/Payloads\n        # Requisito\n        req = Requisito(\n            uuid=str(uuid4()), proyecto_id=proj.id, identificador=&amp;quot;REQ-1&amp;quot;, nombre=&amp;quot;R1&amp;quot;, descripcion=&amp;quot;D1&amp;quot;,\n            tipo=TipoRequisitoEnum.FUNCIONAL, prioridad=PrioridadRequisitoEnum.ALTA, estado=EstadoRequisitoEnum.PENDIENTE,\n            metodo_verificacion=Metodo_verificacion_requisito_Enum.PRUEBA, categoria=Categoria_requisito_Enum.ADECUACION_FUNCIONAL,\n            riesgo=Riesgo_Requisito_Enum.BAJO\n        )\n        db.add(req)\n        db.flush()\n        db.refresh(req)\n    \n        # Sprint\n        sprint = Sprint(\n            uuid=str(uuid4()), proyecto_id=proj.id, nombre=&amp;quot;S1&amp;quot;, fecha_inicio=date.today(), fecha_fin=date.today(),\n            objetivo=&amp;quot;Obj&amp;quot;, estado=EstadoSprint.PLANIFICADO\n        )\n        db.add(sprint)\n        db.flush()\n        db.refresh(sprint)\n    \n        # Historia\n        hu = HistoriaUsuario(\n            uuid=str(uuid4()), titulo=&amp;quot;HU1&amp;quot;, descripcion=&amp;quot;Esta es una descripcion lo suficientemente larga para cumplir con la validacion de minimo 60 caracteres requerida por el esquema de historia de usuario.&amp;quot;, prioridad=Prioridad.ALTA,\n            estado=EstadoHU.PENDIENTE, estimacion=5, criterios_aceptacion=&amp;quot;Crit&amp;quot;,\n            requisitos=[req], creado_por_id=cp.id, sprint_id=sprint.id\n        )\n        db.add(hu)\n        db.flush()\n        db.refresh(hu)\n    \n        # Tarea\n        tarea = Tarea(\n            uuid=str(uuid4()), identificador=&amp;quot;TAR-1&amp;quot;, titulo=&amp;quot;T1&amp;quot;, prioridad=PrioridadTareaEnum.ALTA, estado=EstadoTareaEnum.PENDIENTE,\n            historia_usuario_id=hu.id\n        )\n        db.add(tarea)\n        db.flush()\n        db.refresh(tarea)\n    \n        # Defecto\n        bug = Defecto(\n            uuid=str(uuid4()), titulo=&amp;quot;Bug1&amp;quot;, descripcion_detallada=&amp;quot;Desc&amp;quot;, tipo_defecto=TipoDefectoEnum.FUNCIONAL,\n            prioridad=PrioridadDefectoEnum.ALTA, severidad=TipoSeveridadEnum.CRITICO, estado=EstadoDefectoEnum.PENDIENTE,\n            historia_usuario_id=hu.id, codigo=&amp;quot;DEF-1&amp;quot;\n        )\n        db.add(bug)\n    \n        db.commit()\n    \n        # Helper to switch roles\n        def switch_role(role_obj):\n            cp.rol_proyecto_id = role_obj.id\n            db.commit()\n    \n        # 6. Iterate and Test\n        print(&amp;quot;\\n--- Starting Permission Audit ---&amp;quot;)\n    \n        replacements = {\n            &amp;quot;{proyecto_uuid}&amp;quot;: str(proj.uuid),\n            &amp;quot;{requisito_uuid}&amp;quot;: str(req.uuid),\n            &amp;quot;{historia_uuid}&amp;quot;: str(hu.uuid),\n            &amp;quot;{tarea_uuid}&amp;quot;: str(tarea.uuid),\n            &amp;quot;{sprint_uuid}&amp;quot;: str(sprint.uuid),\n            &amp;quot;{defecto_uuid}&amp;quot;: str(bug.uuid),\n            &amp;quot;{cp_uuid}&amp;quot;: str(cp.uuid)\n        }\n    \n        def format_val(val):\n            if isinstance(val, str):\n                for k, v in replacements.items():\n                    val = val.replace(k, v)\n            if isinstance(val, dict):\n                return {k: format_val(v) for k, v in val.items()}\n            if isinstance(val, list):\n                return [format_val(v) for v in val]\n            return val\n    \n        for permission, tests in PERMISSIONS_TO_TEST.items():\n            print(f&amp;quot;Testing Permission: {permission}&amp;quot;)\n            for test_case in tests:\n                method, url, payload = test_case[:3]\n                has_body_delete = False\n                if len(test_case) == 4:\n                     has_body_delete = test_case[3]\n    \n                url_fmt = format_val(url)\n                payload_fmt = format_val(payload) if payload else None\n    \n                # TEST 1: Positive Case (Has Permission)\n                switch_role(role_admin)\n    \n                # Since we are modifying real data, creating might duplicate or deleting might remove.\n                # Ideally we rely on the specific endpoints logic.\n                # DELETE endpoints will remove the entity, making subsequent tests fail.\n                # We should skip actual execution success check, just check for 403 vs 200/201/404/400 (anything but 403)\n                # Actually, if we delete the entity, the next test (Negative) will get 404, which is NOT 403.\n                # So Delete tests are tricky.\n                # Strategy: For DELETE, run Negative case FIRST (should get 403), then Positive case.\n    \n                # TEST 2: Negative Case (No Permission)\n                switch_role(role_none)\n                resp = client.request(method, url_fmt, json=payload_fmt, headers=headers)\n                if has_body_delete and method == &amp;quot;DELETE&amp;quot;:\n                     resp = client.request(method, url_fmt, json=payload_fmt, headers=headers)\n    \n                if resp.status_code != 403:\n                    print(f&amp;quot;[DEBUG] Status: {resp.status_code}, Response: {resp.text}&amp;quot;)\n    \n&amp;gt;               assert resp.status_code == 403, f&amp;quot;Endpoint {method} {url_fmt} require {permission}, but got {resp.status_code} with no permissions&amp;quot;\nE               AssertionError: Endpoint PUT /proyectos/c6ee0a90-7422-4c1f-9dde-0c39339875cb require proyecto:editar, but got 200 with no permissions\nE               assert 200 == 403\nE                +  where 200 = &amp;lt;Response [200 OK]&amp;gt;.status_code\n\napp/tests/test_permisos_audit.py:222: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n--- Starting Permission Audit ---\nTesting Permission: proyecto:editar\n\n[TEST] PUT /proyectos/c6ee0a90-7422-4c1f-9dde-0c39339875cb\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Editado&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Desc&amp;#x27;}\n[DEBUG] Status: 200, Response: {&amp;quot;code&amp;quot;:200,&amp;quot;msg&amp;quot;:&amp;quot;Proyecto actualizado exitosamente&amp;quot;,&amp;quot;data&amp;quot;:{&amp;quot;codigo&amp;quot;:&amp;quot;AUDIT-1&amp;quot;,&amp;quot;nombre&amp;quot;:&amp;quot;Editado&amp;quot;,&amp;quot;descripcion&amp;quot;:&amp;quot;Desc&amp;quot;,&amp;quot;fecha_inicio&amp;quot;:null,&amp;quot;fecha_fin&amp;quot;:null,&amp;quot;tipo&amp;quot;:&amp;quot;WEB&amp;quot;,&amp;quot;id&amp;quot;:1,&amp;quot;uuid&amp;quot;:&amp;quot;c6ee0a90-7422-4c1f-9dde-0c39339875cb&amp;quot;,&amp;quot;version_actual&amp;quot;:2,&amp;quot;estado&amp;quot;:&amp;quot;ACTIVO&amp;quot;,&amp;quot;estado_actual&amp;quot;:&amp;quot;PLANIFICACION&amp;quot;}}\n&#34;}], &#34;app/tests/test_permisos_enforcement.py::test_permission_enforcement&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_permisos_enforcement.py::test_permission_enforcement&#34;, &#34;duration&#34;: &#34;370 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_permisos_enforcement.py::test_permission_enforcement&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;370 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /rol-proyectos/permiso\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;historia:&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Permiso para historia&amp;#x27;}\n\n[TEST] GET /rol-proyectos/\n\n[TEST] POST /rol-proyectos/\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Role With Perm&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Has permission&amp;#x27;, &amp;#x27;permisos_uuids&amp;#x27;: [&amp;#x27;17331946-077f-46bc-93ce-bc36f83f9260&amp;#x27;], &amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;1acb15f1-1872-480a-9e06-2119d9bee8d7&amp;#x27;}\n\n[TEST] POST /rol-proyectos/\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Role No Perm&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;No permission&amp;#x27;, &amp;#x27;permisos_uuids&amp;#x27;: [], &amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;1acb15f1-1872-480a-9e06-2119d9bee8d7&amp;#x27;}\n\n[TEST] POST /ejemplos/?proyecto_uuid=1acb15f1-1872-480a-9e06-2119d9bee8d7\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Test 1&amp;#x27;}\n\n[TEST] POST /rol-proyectos/asignar-rol-cuenta\n[TEST] Payload: {&amp;#x27;cuenta_uuid&amp;#x27;: &amp;#x27;ad776e32-cffa-4344-a8ce-66052943835d&amp;#x27;, &amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;1acb15f1-1872-480a-9e06-2119d9bee8d7&amp;#x27;, &amp;#x27;rol_proyecto_uuid&amp;#x27;: &amp;#x27;24300e80-3e89-490d-b394-fc87e1cebb66&amp;#x27;}\n\n[TEST] POST /ejemplos/?proyecto_uuid=1acb15f1-1872-480a-9e06-2119d9bee8d7\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Test 1&amp;#x27;}\n\n[TEST] POST /rol-proyectos/asignar-rol-cuenta\n[TEST] Payload: {&amp;#x27;cuenta_uuid&amp;#x27;: &amp;#x27;ad776e32-cffa-4344-a8ce-66052943835d&amp;#x27;, &amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;1acb15f1-1872-480a-9e06-2119d9bee8d7&amp;#x27;, &amp;#x27;rol_proyecto_uuid&amp;#x27;: &amp;#x27;4ff732b4-fade-441d-b094-264995ab6491&amp;#x27;}\n\n[TEST] POST /ejemplos/?proyecto_uuid=1acb15f1-1872-480a-9e06-2119d9bee8d7\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Test 1&amp;#x27;}\n\n[TEST] POST /ejemplos/?proyecto_uuid=1acb15f1-1872-480a-9e06-2119d9bee8d7\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Test 1&amp;#x27;}\n\n[TEST] POST /ejemplos/?proyecto_uuid=3b8f7168-6500-4e67-92a8-4c631f2c66f9\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Test 1&amp;#x27;}\n&#34;}], &#34;app/tests/test_proyecto_integration.py::test_crear_proyecto&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_proyecto_integration.py::test_crear_proyecto&#34;, &#34;duration&#34;: &#34;282 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_proyecto_integration.py::test_crear_proyecto&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;282 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /proyectos/\n[TEST] Payload: {&amp;#x27;codigo&amp;#x27;: &amp;#x27;PROJ-001&amp;#x27;, &amp;#x27;nombre&amp;#x27;: &amp;#x27;Proyecto Test&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Descripcion de prueba&amp;#x27;, &amp;#x27;fecha_inicio&amp;#x27;: &amp;#x27;2026-01-20&amp;#x27;, &amp;#x27;fecha_fin&amp;#x27;: &amp;#x27;2026-01-20&amp;#x27;, &amp;#x27;tipo&amp;#x27;: &amp;#x27;WEB&amp;#x27;, &amp;#x27;uuid_usuario&amp;#x27;: &amp;#x27;224ec2c5-8267-414e-9998-8a70b951d455&amp;#x27;}\n&#34;}], &#34;app/tests/test_proyecto_integration.py::test_listar_proyectos&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_proyecto_integration.py::test_listar_proyectos&#34;, &#34;duration&#34;: &#34;282 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_proyecto_integration.py::test_listar_proyectos&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;282 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] GET /proyectos/\n&#34;}], &#34;app/tests/test_proyecto_integration.py::test_obtener_proyecto_detalle&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_proyecto_integration.py::test_obtener_proyecto_detalle&#34;, &#34;duration&#34;: &#34;278 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_proyecto_integration.py::test_obtener_proyecto_detalle&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;278 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] GET /proyectos/c703f762-e54f-4f39-8efd-96afe64b1205\n&#34;}], &#34;app/tests/test_proyecto_integration.py::test_agregar_miembro&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_proyecto_integration.py::test_agregar_miembro&#34;, &#34;duration&#34;: &#34;295 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_proyecto_integration.py::test_agregar_miembro&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;295 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /proyectos/agregar-usuario\n[TEST] Payload: None\n\n[TEST] GET /proyectos/miembros/c3625062-1ffa-4dc4-b339-c11fca4020bd\n&#34;}], &#34;app/tests/test_requisito_integration.py::test_crud_requisito&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_requisito_integration.py::test_crud_requisito&#34;, &#34;duration&#34;: &#34;355 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_requisito_integration.py::test_crud_requisito&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;355 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /requisito/guardar-requisito\n[TEST] Payload: {&amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;af34ffb5-78cf-4322-90da-15a4f59a2a8c&amp;#x27;, &amp;#x27;nombre&amp;#x27;: &amp;#x27;Req 1&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Descripci\u00f3n del requisito&amp;#x27;, &amp;#x27;tipo_requisito&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;riesgo&amp;#x27;: &amp;#x27;BAJO&amp;#x27;, &amp;#x27;metodo_verificacion&amp;#x27;: &amp;#x27;PRUEBA&amp;#x27;, &amp;#x27;categoria&amp;#x27;: &amp;#x27;SEGURIDAD&amp;#x27;, &amp;#x27;horas_esfuerzo_estimado&amp;#x27;: 10, &amp;#x27;fuente&amp;#x27;: &amp;#x27;Cliente&amp;#x27;, &amp;#x27;comentarios&amp;#x27;: &amp;#x27;N/A&amp;#x27;}\n\n[TEST] POST /requisito/modificar-requisito\n[TEST] Payload: {&amp;#x27;requisito_uuid&amp;#x27;: &amp;#x27;8551524d-c6e6-443f-b1ec-30b6ff60ca8b&amp;#x27;, &amp;#x27;nombre&amp;#x27;: &amp;#x27;Req 1 Modificado&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Descripci\u00f3n modificada&amp;#x27;, &amp;#x27;tipo_requisito&amp;#x27;: &amp;#x27;FUNCIONAL&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;, &amp;#x27;riesgo&amp;#x27;: &amp;#x27;MEDIO&amp;#x27;, &amp;#x27;metodo_verificacion&amp;#x27;: &amp;#x27;INSPECCION&amp;#x27;, &amp;#x27;categoria&amp;#x27;: &amp;#x27;USABILIDAD&amp;#x27;, &amp;#x27;horas_esfuerzo_estimado&amp;#x27;: 15, &amp;#x27;fuente&amp;#x27;: &amp;#x27;Cliente&amp;#x27;, &amp;#x27;comentarios&amp;#x27;: &amp;#x27;N/A&amp;#x27;}\n\n[TEST] GET /requisito/listar-historial/8551524d-c6e6-443f-b1ec-30b6ff60ca8b\n\n[TEST] POST /requisito/responder-aprobacion\n[TEST] Payload: {&amp;#x27;requisito_uuid&amp;#x27;: &amp;#x27;8551524d-c6e6-443f-b1ec-30b6ff60ca8b&amp;#x27;, &amp;#x27;aprobar&amp;#x27;: True}\n&#34;}], &#34;app/tests/test_rol_integration.py::test_roles_flow&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_rol_integration.py::test_roles_flow&#34;, &#34;duration&#34;: &#34;315 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_rol_integration.py::test_roles_flow&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;315 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /rol-proyectos/permiso\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;crear-tareas&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Permite crear tareas&amp;#x27;}\n\n[TEST] POST /rol-proyectos/\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Developer&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Dev Role&amp;#x27;, &amp;#x27;permisos_uuids&amp;#x27;: [&amp;#x27;9db6c401-7da1-4449-8200-f53b3815cea4&amp;#x27;], &amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;9099ac97-37cd-493c-b6dd-9fb4e06813e3&amp;#x27;}\n\n[TEST] POST /rol-proyectos/asignar-rol-cuenta\n[TEST] Payload: {&amp;#x27;cuenta_uuid&amp;#x27;: &amp;#x27;85a1f4cc-e0e7-484a-9654-16ef050c063c&amp;#x27;, &amp;#x27;proyecto_uuid&amp;#x27;: &amp;#x27;9099ac97-37cd-493c-b6dd-9fb4e06813e3&amp;#x27;, &amp;#x27;rol_proyecto_uuid&amp;#x27;: &amp;#x27;2df34104-6575-4b43-aff5-3baadc593aa7&amp;#x27;}\n\n[TEST] GET /rol-proyectos/usuarios-por-proyecto/9099ac97-37cd-493c-b6dd-9fb4e06813e3\n&#34;}], &#34;app/tests/test_solicitudes.py::test_01_crear_solicitud_correcta&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_01_crear_solicitud_correcta&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_01_crear_solicitud_correcta&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_02_crear_solicitud_correo_duplicado&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_02_crear_solicitud_correo_duplicado&#34;, &#34;duration&#34;: &#34;00:00:03&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_02_crear_solicitud_correo_duplicado&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_03_contrasena_muy_corta&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_03_contrasena_muy_corta&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_03_contrasena_muy_corta&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_04_contrasena_sin_mayuscula&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_04_contrasena_sin_mayuscula&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_04_contrasena_sin_mayuscula&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_05_contrasena_sin_minuscula&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_05_contrasena_sin_minuscula&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_05_contrasena_sin_minuscula&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_06_contrasena_sin_numero&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_06_contrasena_sin_numero&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_06_contrasena_sin_numero&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_07_listar_solicitudes&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_07_listar_solicitudes&#34;, &#34;duration&#34;: &#34;00:00:03&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_07_listar_solicitudes&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_solicitudes.py::test_08_listar_solicitudes_paginadas&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_solicitudes.py::test_08_listar_solicitudes_paginadas&#34;, &#34;duration&#34;: &#34;00:00:03&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_solicitudes.py::test_08_listar_solicitudes_paginadas&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;app/tests/test_sprint_integration.py::test_crud_sprint&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/test_sprint_integration.py::test_crud_sprint&#34;, &#34;duration&#34;: &#34;306 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_sprint_integration.py::test_crud_sprint&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;306 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;client = &amp;lt;conftest.client.&amp;lt;locals&amp;gt;.LoggingTestClient object at 0x72717fc6f620&amp;gt;\nauth_header = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY4OTYxNTkyfQ.ZM8DtrF8nkMM8haBU0TEOiiQozUlDnLsBdFt9vPCaqc&amp;#x27;}\ntest_user = &amp;lt;app.models.cuenta.Cuenta object at 0x72717fc6f050&amp;gt;, db = &amp;lt;sqlalchemy.orm.session.Session object at 0x72717fc6f830&amp;gt;\n\n    def test_crud_sprint(client, auth_header, test_user, db):\n        # Setup Project\n        proj = Proyecto(\n            codigo=&amp;quot;SPR-001&amp;quot;,\n            nombre=&amp;quot;Proyecto Sprint&amp;quot;,\n            descripcion=&amp;quot;Desc&amp;quot;,\n            fecha_inicio=date.today(),\n            fecha_fin=date.today() + timedelta(days=30),\n            tipo=TipoProyecto.WEB,\n            estado=EstadoProyecto.ACTIVO,\n            estado_actual=EstadoActualProyecto.PLANIFICACION\n        )\n        db.add(proj)\n        db.commit()\n        db.refresh(proj)\n    \n        cp = CuentaProyecto(cuenta_id=test_user.id, proyecto_id=proj.id)\n        db.add(cp)\n        db.commit()\n    \n        # 1. Create Sprint\n        sprint_start = date.today()\n        sprint_end = sprint_start + timedelta(days=14)\n        payload = {\n            &amp;quot;nombre&amp;quot;: &amp;quot;Sprint 1&amp;quot;,\n            &amp;quot;fecha_inicio&amp;quot;: sprint_start.isoformat(),\n            &amp;quot;fecha_fin&amp;quot;: sprint_end.isoformat(),\n            &amp;quot;objetivo&amp;quot;: &amp;quot;Objetivo del Sprint 1&amp;quot;,\n            &amp;quot;uuid_proyecto&amp;quot;: str(proj.uuid)\n        }\n        response = client.post(&amp;quot;/sprints/&amp;quot;, json=payload, headers=auth_header)\n&amp;gt;       assert response.status_code == 201\nE       assert 403 == 201\nE        +  where 403 = &amp;lt;Response [403 Forbidden]&amp;gt;.status_code\n\napp/tests/test_sprint_integration.py:41: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /sprints/\n[TEST] Payload: {&amp;#x27;nombre&amp;#x27;: &amp;#x27;Sprint 1&amp;#x27;, &amp;#x27;fecha_inicio&amp;#x27;: &amp;#x27;2026-01-20&amp;#x27;, &amp;#x27;fecha_fin&amp;#x27;: &amp;#x27;2026-02-03&amp;#x27;, &amp;#x27;objetivo&amp;#x27;: &amp;#x27;Objetivo del Sprint 1&amp;#x27;, &amp;#x27;uuid_proyecto&amp;#x27;: &amp;#x27;c71a0123-a8bd-4167-b85d-2773f59c302c&amp;#x27;}\n&#34;}], &#34;app/tests/test_tarea_integration.py::test_crud_tarea&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;app/tests/test_tarea_integration.py::test_crud_tarea&#34;, &#34;duration&#34;: &#34;373 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/test_tarea_integration.py::test_crud_tarea&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;373 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n[TEST] POST /tarea/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Tarea 1&amp;#x27;, &amp;#x27;descripcion&amp;#x27;: &amp;#x27;Descripci\u00f3n de tarea&amp;#x27;, &amp;#x27;criterios_entrada&amp;#x27;: &amp;#x27;Entrada&amp;#x27;, &amp;#x27;criterios_salida&amp;#x27;: &amp;#x27;Salida&amp;#x27;, &amp;#x27;fecha_limite&amp;#x27;: &amp;#x27;2026-01-25T19:13:12.731367&amp;#x27;, &amp;#x27;tipo_tarea&amp;#x27;: &amp;#x27;Desarrollo&amp;#x27;, &amp;#x27;estimacion_horas&amp;#x27;: 4, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;ALTA&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;2d29cc42-4d10-4704-9cd8-e2e81d7126c7&amp;#x27;, &amp;#x27;cuenta_proyecto_uuid&amp;#x27;: &amp;#x27;69a009ce-ab69-4a7c-af05-e522894de7d0&amp;#x27;}\n\n[TEST] GET /tarea/listar/b71159d4-1cd1-47ee-9987-28e7440dee51\n\n[TEST] PUT /tarea/modificar/45a51c0e-33da-468d-b731-8257d4abc51b\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Tarea 1 Modificada&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;MEDIA&amp;#x27;, &amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;69a009ce-ab69-4a7c-af05-e522894de7d0&amp;#x27;, &amp;#x27;cuenta_proyecto_uuid&amp;#x27;: &amp;#x27;69a009ce-ab69-4a7c-af05-e522894de7d0&amp;#x27;}\n\n[TEST] PATCH /tarea/iniciar-progreso/45a51c0e-33da-468d-b731-8257d4abc51b\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;69a009ce-ab69-4a7c-af05-e522894de7d0&amp;#x27;}\n\n[TEST] PATCH /tarea/enviar-revision/45a51c0e-33da-468d-b731-8257d4abc51b\n[TEST] Payload: {&amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;69a009ce-ab69-4a7c-af05-e522894de7d0&amp;#x27;}\n\n[TEST] PATCH /tarea/revisar/45a51c0e-33da-468d-b731-8257d4abc51b\n[TEST] Payload: {&amp;#x27;aprobado&amp;#x27;: True, &amp;#x27;comentario&amp;#x27;: &amp;#x27;Buen trabajo&amp;#x27;, &amp;#x27;responsable_cambio_uuid&amp;#x27;: &amp;#x27;69a009ce-ab69-4a7c-af05-e522894de7d0&amp;#x27;}\n\n[TEST] POST /tarea/crear\n[TEST] Payload: {&amp;#x27;titulo&amp;#x27;: &amp;#x27;Tarea a eliminar&amp;#x27;, &amp;#x27;prioridad&amp;#x27;: &amp;#x27;BAJA&amp;#x27;, &amp;#x27;historia_usuario_uuid&amp;#x27;: &amp;#x27;2d29cc42-4d10-4704-9cd8-e2e81d7126c7&amp;#x27;}\n\n[TEST] DELETE /tarea/eliminar/f2693113-e48d-4352-89c7-4aed746e38e9\n&#34;}], &#34;app/tests/unit/test_desactivar_cuenta.py::test_01_desactivar_cuenta_correcta&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/unit/test_desactivar_cuenta.py::test_01_desactivar_cuenta_correcta&#34;, &#34;duration&#34;: &#34;00:00:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/unit/test_desactivar_cuenta.py::test_01_desactivar_cuenta_correcta&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_01_desactivar_cuenta_correcta():\n        db = TestingSessionLocal()\n        rol = Rol(nombre=&amp;quot;rol_test&amp;quot;)\n        db.add(rol)\n        db.commit()\n        db.refresh(rol)\n    \n        cuenta = Cuenta(\n            uuid=&amp;quot;123e4567-e89b-12d3-a456-426614174001&amp;quot;,\n            estadoCuenta=EstadoCuentaEnum.ACTIVO,\n            rol_id=rol.id\n        )\n        db.add(cuenta)\n        db.commit()\n        db.refresh(cuenta)\n    \n        # Desactivar cuenta correctamente\n        response = client.post(f&amp;quot;/cuenta/{cuenta.uuid}/estado&amp;quot;, json={&amp;quot;estadoCuenta&amp;quot;: &amp;quot;INACTIVO&amp;quot;})\n    \n&amp;gt;       assert response.status_code == 200\nE       assert 404 == 200\nE        +  where 404 = &amp;lt;Response [404 Not Found]&amp;gt;.status_code\n\napp/tests/unit/test_desactivar_cuenta.py:60: AssertionError\n&#34;}], &#34;app/tests/unit/test_desactivar_cuenta.py::test_02_desactivar_cuenta_no_existente&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/unit/test_desactivar_cuenta.py::test_02_desactivar_cuenta_no_existente&#34;, &#34;duration&#34;: &#34;147 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/unit/test_desactivar_cuenta.py::test_02_desactivar_cuenta_no_existente&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;147 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_02_desactivar_cuenta_no_existente():\n        # Intentar desactivar una cuenta que no existe\n        response = client.post(&amp;quot;/cuenta/9999-9999-9999-9999-9999-9999-9999-9999/estado&amp;quot;, json={&amp;quot;estadoCuenta&amp;quot;: &amp;quot;INACTIVO&amp;quot;})\n    \n        assert response.status_code == 422\n        json_data = response.json()\n&amp;gt;       assert json_data[&amp;quot;detail&amp;quot;] == &amp;quot;Cuenta no encontrada&amp;quot;\nE       AssertionError: assert [{&amp;#x27;ctx&amp;#x27;: {&amp;#x27;error&amp;#x27;: &amp;#x27;invalid group count: expected 5, found 8&amp;#x27;}, &amp;#x27;input&amp;#x27;: &amp;#x27;9999-9999-9999-9999-9999-9999-9999-9999&amp;#x27;, &amp;#x27;loc&amp;#x27;: [&amp;#x27;path&amp;#x27;, &amp;#x27;cuenta_uuid&amp;#x27;], &amp;#x27;msg&amp;#x27;: &amp;#x27;Input should be a valid UUID, invalid group count: expected 5, found 8&amp;#x27;, ...}] == &amp;#x27;Cuenta no encontrada&amp;#x27;\n\napp/tests/unit/test_desactivar_cuenta.py:80: AssertionError\n&#34;}], &#34;app/tests/unit/test_desactivar_cuenta.py::test_03_errores_estado_invalido&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/unit/test_desactivar_cuenta.py::test_03_errores_estado_invalido&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/unit/test_desactivar_cuenta.py::test_03_errores_estado_invalido&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_03_errores_estado_invalido():\n        # Probar un valor de estado inv\u00e1lido\n        response = client.post(&amp;quot;/cuenta/124e4567-e89b-12d3-a456-426614174002/estado&amp;quot;, json={&amp;quot;estadoCuenta&amp;quot;: &amp;quot;ACTIVO&amp;quot;})\n    \n        assert response.status_code == 404  # Error 422 es para validaciones de Pydantic\n        json_data = response.json()\n        assert &amp;quot;detail&amp;quot; in json_data\n&amp;gt;       assert &amp;quot;Value error&amp;quot; in json_data[&amp;quot;detail&amp;quot;][0][&amp;quot;msg&amp;quot;] or &amp;quot;elija un valor v\u00e1lido&amp;quot; in json_data[&amp;quot;detail&amp;quot;][0][&amp;quot;msg&amp;quot;]\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       TypeError: string indices must be integers, not &amp;#x27;str&amp;#x27;\n\napp/tests/unit/test_desactivar_cuenta.py:89: TypeError\n&#34;}], &#34;app/tests/unit/test_desactivar_cuenta.py::test_04_activar_cuenta&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;app/tests/unit/test_desactivar_cuenta.py::test_04_activar_cuenta&#34;, &#34;duration&#34;: &#34;00:00:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;app/tests/unit/test_desactivar_cuenta.py::test_04_activar_cuenta&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_04_activar_cuenta():\n        # Crear una cuenta en estado INACTIVO para probar la activaci\u00f3n\n        db = TestingSessionLocal()\n        rol = Rol(nombre=&amp;quot;rol_test&amp;quot;)\n        db.add(rol)\n        db.commit()\n        db.refresh(rol)\n    \n        cuenta = Cuenta(\n            uuid=&amp;quot;124e4567-e89b-12d3-a456-426614174002&amp;quot;,\n            estadoCuenta=EstadoCuentaEnum.INACTIVO,\n            rol_id=rol.id\n        )\n        db.add(cuenta)\n        db.commit()\n        db.refresh(cuenta)\n    \n        # Activar cuenta\n        response = client.post(f&amp;quot;/cuenta/{cuenta.uuid}/estado&amp;quot;, json={&amp;quot;estadoCuenta&amp;quot;: &amp;quot;ACTIVO&amp;quot;})\n    \n&amp;gt;       assert response.status_code == 200\nE       assert 404 == 200\nE        +  where 404 = &amp;lt;Response [404 Not Found]&amp;gt;.status_code\n\napp/tests/unit/test_desactivar_cuenta.py:112: AssertionError\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;backend_test_report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

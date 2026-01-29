@@ -1,0 +1,7 @@
+export enum UserStoryStatus {
+    PENDING = "PENDIENTE",
+    IN_PROGRESS = "EN_PROCESO",
+    COMPLETED = "COMPLETADA",
+    DELAYED = "ATRASADA",
+    OBSOLETE = "OBSOLETA",
+}

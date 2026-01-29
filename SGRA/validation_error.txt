@@ -1,0 +1,442 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.1, pluggy-1.6.0
+rootdir: /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/SGRA
+configfile: pyproject.toml
+plugins: anyio-4.11.0, html-4.2.0, metadata-3.1.1
+collected 1 item
+
+app/tests/test_permisos_audit.py F                                       [100%]
+
+=================================== FAILURES ===================================
+______________________ test_audit_permissions_enforcement ______________________
+
+client = <conftest.client.<locals>.LoggingTestClient object at 0x7ac330b84b60>
+db = <sqlalchemy.orm.session.Session object at 0x7ac330eb11f0>
+test_user = <app.models.cuenta.Cuenta object at 0x7ac330adb800>
+
+    def test_audit_permissions_enforcement(client, db, test_user):
+        # 1. Setup Permissions
+        perms = {}
+        for code in PERMISSIONS_TO_TEST.keys():
+            p = db.query(Permiso).filter_by(nombre=code).first()
+            if not p:
+                p = Permiso(nombre=code, descripcion=f"Test {code}")
+                (db.add(p))
+            perms[code] = p
+        db.commit()
+    
+        # 2. Setup Project
+        proj = Proyecto(
+            nombre="Audit Project",
+            descripcion="Testing permissions",
+            codigo="AUDIT-1",
+            estado=EstadoProyecto.ACTIVO,
+            estado_actual=EstadoActualProyecto.PLANIFICACION,
+            tipo=TipoProyecto.WEB
+        )
+        db.add(proj)
+        db.commit()
+        db.refresh(proj)
+    
+        # 3. Setup Roles
+        role_admin = RolProyecto(nombre="Rol Admin", descripcion="Has all permissions", proyecto_id=proj.id)
+        role_none = RolProyecto(nombre="Rol None", descripcion="Has no permissions", proyecto_id=proj.id)
+        db.add_all([role_admin, role_none])
+        db.commit()
+    
+        # Assign all permissions to Admin Role
+        for p in perms.values():
+            db.add(RolPermiso(rol_id=role_admin.id, permiso_id=p.id))
+        db.commit()
+    
+        print(f"DEBUG: Admin Role ID: {role_admin.id}")
+        print(f"DEBUG: Historia Editar Perm ID: {perms['historia:editar'].id}")
+        rps = db.query(RolPermiso).all()
+        print(f"DEBUG: Total RolPermiso: {len(rps)}")
+        for rp in rps:
+            print(f"DEBUG: RolPermiso: rol={rp.rol_id}, perm={rp.permiso_id}")
+    
+        # 4. Assign User to Project (initially with Admin role to create entities)
+        cp = CuentaProyecto(cuenta_id=test_user.id, proyecto_id=proj.id, rol_proyecto_id=role_admin.id)
+        db.add(cp)
+        db.commit()
+    
+        test_token = create_access_token(subject=str(test_user.id))
+        headers = {"Authorization": f"Bearer {test_token}"}
+    
+        # 5. Create specific entities for replacement in URLs/Payloads
+        # Requisito
+        req = Requisito(
+            uuid=str(uuid4()), proyecto_id=proj.id, identificador="REQ-1", nombre="R1", descripcion="D1",
+            tipo=TipoRequisitoEnum.FUNCIONAL, prioridad=PrioridadRequisitoEnum.ALTA, estado=EstadoRequisitoEnum.PENDIENTE,
+            metodo_verificacion=Metodo_verificacion_requisito_Enum.PRUEBA, categoria=Categoria_requisito_Enum.ADECUACION_FUNCIONAL,
+            riesgo=Riesgo_Requisito_Enum.BAJO
+        )
+        db.add(req)
+        db.flush()
+        db.refresh(req)
+    
+        # Sprint
+        sprint = Sprint(
+            uuid=str(uuid4()), proyecto_id=proj.id, nombre="S1", fecha_inicio=date.today(), fecha_fin=date.today(),
+            objetivo="Obj", estado=EstadoSprint.PLANIFICADO
+        )
+        db.add(sprint)
+        db.flush()
+        db.refresh(sprint)
+    
+        # Historia
+        hu = HistoriaUsuario(
+            uuid=str(uuid4()), titulo="HU1", descripcion="Desc HU1", prioridad=Prioridad.ALTA,
+            estado=EstadoHU.PENDIENTE, estimacion=5, criterios_aceptacion="Crit",
+            requisitos=[req], creado_por_id=cp.id, sprint_id=sprint.id
+        )
+        db.add(hu)
+        db.flush()
+        db.refresh(hu)
+    
+        # Tarea
+        tarea = Tarea(
+            uuid=str(uuid4()), identificador="TAR-1", titulo="T1", prioridad=PrioridadTareaEnum.ALTA, estado=EstadoTareaEnum.PENDIENTE,
+            historia_usuario_id=hu.id
+        )
+        db.add(tarea)
+        db.flush()
+        db.refresh(tarea)
+    
+        # Defecto
+        bug = Defecto(
+            uuid=str(uuid4()), titulo="Bug1", descripcion_detallada="Desc", tipo_defecto=TipoDefectoEnum.FUNCIONAL,
+            prioridad=PrioridadDefectoEnum.ALTA, severidad=TipoSeveridadEnum.CRITICO, estado=EstadoDefectoEnum.PENDIENTE,
+            historia_usuario_id=hu.id, codigo="DEF-1"
+        )
+        db.add(bug)
+    
+        db.commit()
+    
+        # Helper to switch roles
+        def switch_role(role_obj):
+            cp.rol_proyecto_id = role_obj.id
+            db.commit()
+    
+        # 6. Iterate and Test
+        print("\n--- Starting Permission Audit ---")
+    
+        replacements = {
+            "{proyecto_uuid}": str(proj.uuid),
+            "{requisito_uuid}": str(req.uuid),
+            "{historia_uuid}": str(hu.uuid),
+            "{tarea_uuid}": str(tarea.uuid),
+            "{sprint_uuid}": str(sprint.uuid),
+            "{defecto_uuid}": str(bug.uuid)
+        }
+    
+        def format_val(val):
+            if isinstance(val, str):
+                for k, v in replacements.items():
+                    val = val.replace(k, v)
+            if isinstance(val, dict):
+                return {k: format_val(v) for k, v in val.items()}
+            if isinstance(val, list):
+                return [format_val(v) for v in val]
+            return val
+    
+        for permission, tests in PERMISSIONS_TO_TEST.items():
+            print(f"Testing Permission: {permission}")
+            for method, url, payload in tests:
+                has_body_delete = False
+                if len(tests[0]) == 4: # Special flag
+                     has_body_delete = tests[0][3]
+    
+                url_fmt = format_val(url)
+                payload_fmt = format_val(payload) if payload else None
+    
+                # TEST 1: Positive Case (Has Permission)
+                switch_role(role_admin)
+    
+                # Since we are modifying real data, creating might duplicate or deleting might remove.
+                # Ideally we rely on the specific endpoints logic.
+                # DELETE endpoints will remove the entity, making subsequent tests fail.
+                # We should skip actual execution success check, just check for 403 vs 200/201/404/400 (anything but 403)
+                # Actually, if we delete the entity, the next test (Negative) will get 404, which is NOT 403.
+                # So Delete tests are tricky.
+                # Strategy: For DELETE, run Negative case FIRST (should get 403), then Positive case.
+    
+                # TEST 2: Negative Case (No Permission)
+                switch_role(role_none)
+                resp = client.request(method, url_fmt, json=payload_fmt, headers=headers)
+                if has_body_delete and method == "DELETE":
+                     resp = client.request(method, url_fmt, json=payload_fmt, headers=headers)
+    
+                if resp.status_code != 403:
+                    print(f"[DEBUG] Status: {resp.status_code}, Response: {resp.text}")
+    
+                assert resp.status_code == 403, f"Endpoint {method} {url_fmt} require {permission}, but got {resp.status_code} with no permissions"
+    
+                # TEST 3: Positive Check
+                # We only run positive check if it's not destructive or if we can handle it.
+                # For Audit purposes, verifying 403 is the most critical part for Security.
+                # Verifying 200/201 confirms the logic works when authorized.
+                switch_role(role_admin)
+>               resp = client.request(method, url_fmt, json=payload_fmt, headers=headers)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/tests/test_permisos_audit.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/tests/conftest.py:58: in request
+    return super().request(method, url, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../venv/lib/python3.12/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../venv/lib/python3.12/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../venv/lib/python3.12/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../venv/lib/python3.12/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../venv/lib/python3.12/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../venv/lib/python3.12/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../venv/lib/python3.12/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../venv/lib/python3.12/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../venv/lib/python3.12/site-packages/anyio/from_thread.py:321: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../venv/lib/python3.12/site-packages/anyio/from_thread.py:252: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+../venv/lib/python3.12/site-packages/fastapi/applications.py:1134: in __call__
+    await super().__call__(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../venv/lib/python3.12/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../venv/lib/python3.12/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../venv/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../venv/lib/python3.12/site-packages/fastapi/routing.py:125: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../venv/lib/python3.12/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../venv/lib/python3.12/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../venv/lib/python3.12/site-packages/fastapi/routing.py:111: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+../venv/lib/python3.12/site-packages/fastapi/routing.py:413: in app
+    content = await serialize_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def serialize_response(
+        *,
+        field: Optional[ModelField] = None,
+        response_content: Any,
+        include: Optional[IncEx] = None,
+        exclude: Optional[IncEx] = None,
+        by_alias: bool = True,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        is_coroutine: bool = True,
+    ) -> Any:
+        if field:
+            errors = []
+            if not hasattr(field, "serialize"):
+                # pydantic v1
+                response_content = _prepare_response_content(
+                    response_content,
+                    exclude_unset=exclude_unset,
+                    exclude_defaults=exclude_defaults,
+                    exclude_none=exclude_none,
+                )
+            if is_coroutine:
+                value, errors_ = field.validate(response_content, {}, loc=("response",))
+            else:
+                value, errors_ = await run_in_threadpool(
+                    field.validate, response_content, {}, loc=("response",)
+                )
+            if isinstance(errors_, list):
+                errors.extend(errors_)
+            elif errors_:
+                errors.append(errors_)
+            if errors:
+>               raise ResponseValidationError(
+                    errors=_normalize_errors(errors), body=response_content
+                )
+E               fastapi.exceptions.ResponseValidationError: 1 validation errors:
+E                 {'type': 'string_too_short', 'loc': ('response', 'data', 'descripcion'), 'msg': 'String should have at least 60 characters', 'input': 'Desc HU1', 'ctx': {'min_length': 60}}
+
+../venv/lib/python3.12/site-packages/fastapi/routing.py:254: ResponseValidationError
+----------------------------- Captured stdout call -----------------------------
+DEBUG: Admin Role ID: 1
+DEBUG: Historia Editar Perm ID: 11
+DEBUG: Total RolPermiso: 22
+DEBUG: RolPermiso: rol=1, perm=1
+DEBUG: RolPermiso: rol=1, perm=2
+DEBUG: RolPermiso: rol=1, perm=3
+DEBUG: RolPermiso: rol=1, perm=4
+DEBUG: RolPermiso: rol=1, perm=5
+DEBUG: RolPermiso: rol=1, perm=6
+DEBUG: RolPermiso: rol=1, perm=7
+DEBUG: RolPermiso: rol=1, perm=8
+DEBUG: RolPermiso: rol=1, perm=9
+DEBUG: RolPermiso: rol=1, perm=10
+DEBUG: RolPermiso: rol=1, perm=11
+DEBUG: RolPermiso: rol=1, perm=12
+DEBUG: RolPermiso: rol=1, perm=13
+DEBUG: RolPermiso: rol=1, perm=14
+DEBUG: RolPermiso: rol=1, perm=15
+DEBUG: RolPermiso: rol=1, perm=16
+DEBUG: RolPermiso: rol=1, perm=17
+DEBUG: RolPermiso: rol=1, perm=18
+DEBUG: RolPermiso: rol=1, perm=19
+DEBUG: RolPermiso: rol=1, perm=20
+DEBUG: RolPermiso: rol=1, perm=21
+DEBUG: RolPermiso: rol=1, perm=22
+
+--- Starting Permission Audit ---
+Testing Permission: proyecto:editar
+
+[TEST] PUT /proyectos/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: {'nombre': 'Editado', 'descripcion': 'Desc'}
+
+[TEST] PUT /proyectos/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: {'nombre': 'Editado', 'descripcion': 'Desc'}
+Testing Permission: proyecto:gestionar-usuarios
+
+[TEST] GET /proyectos/miembros/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+
+[TEST] GET /proyectos/miembros/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+Testing Permission: requisito:ver
+
+[TEST] GET /requisito/listar-requisitos/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+
+[TEST] GET /requisito/listar-requisitos/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+Testing Permission: requisito:crear
+
+[TEST] POST /requisito/guardar-requisito
+[TEST] Payload: {'proyecto_uuid': 'deb21f33-0ab3-4acf-a951-739e228aabb1', 'nombre': 'Req 1', 'descripcion': 'Desc', 'tipo_requisito': 'FUNCIONAL', 'prioridad': 'ALTA', 'metodo_verificacion': 'PRUEBA', 'categoria': 'ADECUACION_FUNCIONAL', 'riesgo': 'BAJO'}
+DEBUG: verificacion_permiso failed: User 1 has role 2 but lacks permission requisito:crear (id: 4)
+
+[TEST] POST /requisito/guardar-requisito
+[TEST] Payload: {'proyecto_uuid': 'deb21f33-0ab3-4acf-a951-739e228aabb1', 'nombre': 'Req 1', 'descripcion': 'Desc', 'tipo_requisito': 'FUNCIONAL', 'prioridad': 'ALTA', 'metodo_verificacion': 'PRUEBA', 'categoria': 'ADECUACION_FUNCIONAL', 'riesgo': 'BAJO'}
+Testing Permission: requisito:editar
+
+[TEST] POST /requisito/modificar-requisito
+[TEST] Payload: {'requisito_uuid': '28a6df83-f3c9-4a42-b285-0e8b100c126f', 'nombre': 'Mod', 'descripcion': 'D', 'tipo_requisito': 'FUNCIONAL', 'prioridad': 'ALTA'}
+DEBUG: verificacion_permiso failed: User 1 has role 2 but lacks permission requisito:editar (id: 5)
+
+[TEST] POST /requisito/modificar-requisito
+[TEST] Payload: {'requisito_uuid': '28a6df83-f3c9-4a42-b285-0e8b100c126f', 'nombre': 'Mod', 'descripcion': 'D', 'tipo_requisito': 'FUNCIONAL', 'prioridad': 'ALTA'}
+Testing Permission: sprint:ver
+
+[TEST] GET /sprints/proyecto/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+
+[TEST] GET /sprints/proyecto/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+Testing Permission: sprint:crear
+
+[TEST] POST /sprints/
+[TEST] Payload: {'nombre': 'Sprint 1', 'fecha_inicio': '2026-01-20', 'fecha_fin': '2026-01-21', 'objetivo': 'Obj sprint', 'uuid_proyecto': 'deb21f33-0ab3-4acf-a951-739e228aabb1'}
+DEBUG: verificacion_permiso failed: User 1 has role 2 but lacks permission sprint:crear (id: 7)
+
+[TEST] POST /sprints/
+[TEST] Payload: {'nombre': 'Sprint 1', 'fecha_inicio': '2026-01-20', 'fecha_fin': '2026-01-21', 'objetivo': 'Obj sprint', 'uuid_proyecto': 'deb21f33-0ab3-4acf-a951-739e228aabb1'}
+Testing Permission: sprint:editar
+
+[TEST] PUT /sprints/21d3b7ef-8f01-43ba-b33d-0a0d9c49c431
+[TEST] Payload: {'nombre': 'Sprint Mod'}
+DEBUG: verificacion_permiso failed: User 1 has role 2 but lacks permission sprint:editar (id: 8)
+
+[TEST] PUT /sprints/21d3b7ef-8f01-43ba-b33d-0a0d9c49c431
+[TEST] Payload: {'nombre': 'Sprint Mod'}
+Testing Permission: historia:ver
+
+[TEST] GET /historias_usuario/listar/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+
+[TEST] GET /historias_usuario/listar/deb21f33-0ab3-4acf-a951-739e228aabb1
+[TEST] Payload: None
+Testing Permission: historia:crear
+
+[TEST] POST /historias_usuario/crear
+[TEST] Payload: {'titulo': 'Historia T', 'descripcion': 'Esta es una descripcion lo suficientemente larga para cumplir con la validacion de minimo 60 caracteres requerida por el esquema de historia de usuario.', 'prioridad': 'ALTA', 'criterios_aceptacion': 'Crit', 'estimacion': 5, 'uuids_requisitos': ['28a6df83-f3c9-4a42-b285-0e8b100c126f']}
+DEBUG: verificacion_permiso failed: User 1 has role 2 but lacks permission historia:crear (id: 10)
+
+[TEST] POST /historias_usuario/crear
+[TEST] Payload: {'titulo': 'Historia T', 'descripcion': 'Esta es una descripcion lo suficientemente larga para cumplir con la validacion de minimo 60 caracteres requerida por el esquema de historia de usuario.', 'prioridad': 'ALTA', 'criterios_aceptacion': 'Crit', 'estimacion': 5, 'uuids_requisitos': ['28a6df83-f3c9-4a42-b285-0e8b100c126f']}
+Testing Permission: historia:editar
+
+[TEST] PUT /historias_usuario/editar
+[TEST] Payload: {'uuid_historia': 'a14d7a2b-9f44-4a25-968a-6cce80f22920', 'datos': {'titulo': 'Edited Title'}}
+DEBUG: Resolving Permiso - User: 1, Proj: 1, Perm: 'historia:editar'
+DEBUG: verificacion_permiso failed: User 1 has role 2 but lacks permission historia:editar (id: 11)
+
+[TEST] PUT /historias_usuario/editar
+[TEST] Payload: {'uuid_historia': 'a14d7a2b-9f44-4a25-968a-6cce80f22920', 'datos': {'titulo': 'Edited Title'}}
+DEBUG: Resolving Permiso - User: 1, Proj: 1, Perm: 'historia:editar'
+=============================== warnings summary ===============================
+app/schemas/cuenta_schema.py:35
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/SGRA/app/schemas/cuenta_schema.py:35: PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated. You should migrate to Pydantic V2 style `@model_validator` validators, see the migration guide for more details. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    @root_validator(pre=True)
+
+app/schemas/cuenta_proyecto_schema.py:12
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/SGRA/app/schemas/cuenta_proyecto_schema.py:12: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class CuentaProyectoResponse(BaseModel):
+
+../venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:383
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/venv/lib/python3.12/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+  * 'orm_mode' has been renamed to 'from_attributes'
+    warnings.warn(message, UserWarning)
+
+app/schemas/defecto_schema.py:35
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/SGRA/app/schemas/defecto_schema.py:35: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class HistorialDefectoResponse(BaseModel):
+
+app/schemas/defecto_schema.py:45
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/SGRA/app/schemas/defecto_schema.py:45: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class DefectoResponse(DefectoBase):
+
+app/tests/test_permisos_audit.py::test_audit_permissions_enforcement
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py:3624: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+app/tests/test_permisos_audit.py::test_audit_permissions_enforcement
+  /media/diego/Windows_T1/Sandbox/Proyecto_SGRA/SGRA/app/core/security.py:28: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED app/tests/test_permisos_audit.py::test_audit_permissions_enforcement
+======================== 1 failed, 7 warnings in 0.89s =========================
